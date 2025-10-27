@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Iterable
 
 from playwright.async_api import Browser, Error, async_playwright
-from pypdf import PdfMerger
+from pypdf import PdfWriter
 
 LOGGER = logging.getLogger(__name__)
 
@@ -62,7 +62,7 @@ async def compile_urls_to_pdf(
         Maximum number of seconds to wait for each page load.
     """
 
-    pdf_merger = PdfMerger()
+    pdf_writer = PdfWriter()
     output_path = Path(output_path)
 
     async with async_playwright() as playwright:
@@ -80,13 +80,13 @@ async def compile_urls_to_pdf(
                     raise RuntimeError(f"Playwright failed to render {url}: {playwright_error}") from playwright_error
 
                 with BytesIO(pdf_bytes) as buffer:
-                    pdf_merger.append(buffer)
+                    pdf_writer.append(buffer)
         finally:
             await browser.close()
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
     with output_path.open("wb") as output_file:
-        pdf_merger.write(output_file)
-    pdf_merger.close()
+        pdf_writer.write(output_file)
+    pdf_writer.close()
 
     LOGGER.info("Created %s", output_path)
