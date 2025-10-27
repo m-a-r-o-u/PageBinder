@@ -12,10 +12,10 @@ from pypdf import PdfWriter
 LOGGER = logging.getLogger(__name__)
 
 DEFAULT_MARGIN = {
-    "top": "0.5in",
-    "bottom": "0.5in",
-    "left": "0.5in",
-    "right": "0.5in",
+    "top": "0",
+    "bottom": "0",
+    "left": "0",
+    "right": "0",
 }
 
 
@@ -30,10 +30,12 @@ async def _render_single_page(
     page = await browser.new_page()
     try:
         await page.goto(url, wait_until=wait_until, timeout=timeout * 1000)
+        await page.emulate_media(media="screen")
         pdf_bytes = await page.pdf(
             print_background=True,
             display_header_footer=False,
             margin=DEFAULT_MARGIN,
+            prefer_css_page_size=True,
         )
         LOGGER.debug("Rendered %s (%s bytes)", url, len(pdf_bytes))
         return pdf_bytes
