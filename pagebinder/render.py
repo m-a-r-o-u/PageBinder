@@ -31,11 +31,42 @@ async def _render_single_page(
     try:
         await page.goto(url, wait_until=wait_until, timeout=timeout * 1000)
         await page.emulate_media(media="screen")
+
+        dimensions = await page.evaluate(
+            """
+            () => {
+                const body = document.body;
+                const html = document.documentElement;
+
+                const width = Math.max(
+                    body ? body.scrollWidth : 0,
+                    body ? body.offsetWidth : 0,
+                    html.clientWidth,
+                    html.scrollWidth,
+                    html.offsetWidth,
+                );
+                const height = Math.max(
+                    body ? body.scrollHeight : 0,
+                    body ? body.offsetHeight : 0,
+                    html.clientHeight,
+                    html.scrollHeight,
+                    html.offsetHeight,
+                );
+
+                return { width, height };
+            }
+            """
+        )
+
+        width = max(1, int(dimensions["width"]))
+        height = max(1, int(dimensions["height"]))
         pdf_bytes = await page.pdf(
             print_background=True,
             display_header_footer=False,
             margin=DEFAULT_MARGIN,
-            prefer_css_page_size=True,
+            prefer_css_page_size=False,
+            width=f"{width}px",
+            height=f"{height}px",
         )
         LOGGER.debug("Rendered %s (%s bytes)", url, len(pdf_bytes))
         return pdf_bytes
